@@ -1,0 +1,4 @@
+{
+  "$schema": "./build.schema.json",
+  "Solution": "src/CP.AspNetCore.SignalR.Client.Rx.sln"
+}
