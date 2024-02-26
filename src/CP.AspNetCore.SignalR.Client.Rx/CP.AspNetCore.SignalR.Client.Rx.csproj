@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
   </ItemGroup>
   <ItemGroup Condition=" $(TargetFramework.StartsWith('net7')) ">
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.16" />
   </ItemGroup>
 
   <ItemGroup>
