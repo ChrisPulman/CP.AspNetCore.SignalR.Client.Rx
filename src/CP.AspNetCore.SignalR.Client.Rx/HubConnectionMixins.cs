@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Threading;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace CP.AspNetCore.SignalR.Client.Rx;
@@ -18,15 +20,14 @@ public static class HubConnectionMixins
     /// <param name="connection">The connection.</param>
     /// <returns>An Observable Unit.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1047:Non-asynchronous method name should not end with 'Async'.", Justification = "Replicating base function.")]
-    public static IObservable<Unit> StartAsync(this HubConnection connection)
+    public static IObservable<Unit> StartObservable(this HubConnection connection)
     {
         if (connection == null)
         {
             throw new ArgumentNullException(nameof(connection));
         }
 
-        return Observable.FromAsync(connection.StartAsync).Retry();
+        return Observable.FromAsync(async () => await connection.StartAsync()).Retry();
     }
 
     /// <summary>
@@ -36,8 +37,7 @@ public static class HubConnectionMixins
     /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None" />.</param>
     /// <returns>An Observable Unit.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1047:Non-asynchronous method name should not end with 'Async'.", Justification = "Replicating base function.")]
-    public static IObservable<Unit> StartAsync(this HubConnection connection, CancellationToken cancellationToken = default)
+    public static IObservable<Unit> StartObservable(this HubConnection connection, CancellationToken cancellationToken = default)
     {
         if (connection == null)
         {
@@ -48,13 +48,31 @@ public static class HubConnectionMixins
     }
 
     /// <summary>
+    /// Starts the specified connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <returns>Observable HubConnection.</returns>
+    public static IObservable<HubConnection> Start(this IObservable<HubConnection> connection) =>
+        connection.SelectMany(x => x.StartObservable().Select(_ => x));
+
+    /// <summary>
+    /// Starts the specified connection.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// Observable HubConnection.
+    /// </returns>
+    public static IObservable<HubConnection> Start(this IObservable<HubConnection> connection, CancellationToken cancellationToken = default) =>
+        connection.SelectMany(x => x.StartObservable(cancellationToken).Select(_ => x));
+
+    /// <summary>
     /// Stops a connection to the server.
     /// </summary>
     /// <param name="connection">The connection.</param>
     /// <returns>An Observable Unit.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1047:Non-asynchronous method name should not end with 'Async'.", Justification = "Replicating base function.")]
-    public static IObservable<Unit> StopAsync(this HubConnection connection)
+    public static IObservable<Unit> StopObservable(this HubConnection connection)
     {
         if (connection == null)
         {
@@ -72,7 +90,7 @@ public static class HubConnectionMixins
     /// <returns>An Observable Unit.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1047:Non-asynchronous method name should not end with 'Async'.", Justification = "Replicating base function.")]
-    public static IObservable<Unit> StopAsync(this HubConnection connection, CancellationToken cancellationToken = default)
+    public static IObservable<Unit> StopObservable(this HubConnection connection, CancellationToken cancellationToken = default)
     {
         if (connection == null)
         {
@@ -93,7 +111,7 @@ public static class HubConnectionMixins
     /// A <see cref="IObservable{T}" /> that represents the stream.
     /// </returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    public static IObservable<T> Stream<T>(this HubConnection connection, string methodName, CancellationToken cancellationToken = default)
+    public static IObservable<T> StreamObservable<T>(this HubConnection connection, string methodName, CancellationToken cancellationToken = default)
     {
         if (connection == null)
         {
@@ -118,45 +136,78 @@ public static class HubConnectionMixins
     /// <param name="connection">The connection.</param>
     /// <returns>A <see cref="IObservable{Exception}" />.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    public static IObservable<Exception?> Closed(this HubConnection connection)
+    public static IObservable<Exception?> HasClosed(this HubConnection connection)
     {
         if (connection == null)
         {
             throw new ArgumentNullException(nameof(connection));
         }
 
-        return Observable.FromEvent<Func<Exception?, Task>, Exception>(x => connection.Closed += x, x => connection.Closed -= x);
+        return Observable.Create<Exception?>(observer =>
+        {
+            Task ClosedHandler(Exception? error)
+            {
+                observer.OnNext(error);
+                return Task.CompletedTask;
+            }
+
+            connection.Closed += ClosedHandler;
+
+            return Disposable.Create(() => connection.Closed -= ClosedHandler);
+        });
     }
 
     /// <summary>
     /// Occurs when the <see cref="HubConnection"/> starts reconnecting after losing its underlying connection.
     /// </summary>
     /// <param name="connection">The connection.</param>
-    /// <returns>A <see cref="IObservable{Exception}" />.</returns>
+    /// <returns>The <see cref="Exception"/> that occurred will be passed in as the sole argument to this handler.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    public static IObservable<Exception?> Reconnecting(this HubConnection connection)
+    public static IObservable<Exception?> IsReconnecting(this HubConnection connection)
     {
         if (connection == null)
         {
             throw new ArgumentNullException(nameof(connection));
         }
 
-        return Observable.FromEvent<Func<Exception?, Task>, Exception>(x => connection.Reconnecting += x, x => connection.Reconnecting -= x);
+        return Observable.Create<Exception?>(observer =>
+        {
+            Task ReconnectingHandler(Exception? error)
+            {
+                observer.OnNext(error);
+                return Task.CompletedTask;
+            }
+
+            connection.Reconnecting += ReconnectingHandler;
+
+            return Disposable.Create(() => connection.Reconnecting -= ReconnectingHandler);
+        });
     }
 
     /// <summary>
     /// Occurs when the <see cref="HubConnection"/> successfully reconnects after losing its underlying connection.
     /// </summary>
     /// <param name="connection">The connection.</param>
-    /// <returns>A <see cref="IObservable{String}" />.</returns>
+    /// <returns>Return value will be the <see cref="HubConnection"/>'s new ConnectionId or null if negotiation was skipped.</returns>
     /// <exception cref="System.ArgumentNullException">connection.</exception>
-    public static IObservable<string?> Reconnected(this HubConnection connection)
+    public static IObservable<string?> HasReconnected(this HubConnection connection)
     {
         if (connection == null)
         {
             throw new ArgumentNullException(nameof(connection));
         }
 
-        return Observable.FromEvent<Func<string?, Task>, string>(x => connection.Reconnected += x, x => connection.Reconnected -= x);
+        return Observable.Create<string?>(observer =>
+        {
+            Task ReconnectedHandler(string? connectionId)
+            {
+                observer.OnNext(connectionId);
+                return Task.CompletedTask;
+            }
+
+            connection.Reconnected += ReconnectedHandler;
+
+            return Disposable.Create(() => connection.Reconnected -= ReconnectedHandler);
+        });
     }
 }

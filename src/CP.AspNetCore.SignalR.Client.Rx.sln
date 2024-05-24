@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.c
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CP.AspNetCore.SignalR.Client.Rx", "CP.AspNetCore.SignalR.Client.Rx\CP.AspNetCore.SignalR.Client.Rx.csproj", "{58E68DB2-0B49-4E6B-BBEE-066F0CBD4BDE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRChat", "SampleWeb\SignalRChat.csproj", "{8BACD9DC-36C3-4C41-8AE8-1AFB42331096}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SignalRChatClient", "WpfClient\SignalRChatClient.csproj", "{A92FA6F9-356B-42CD-BB90-2CA02DF323B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +23,14 @@ Global
 		{58E68DB2-0B49-4E6B-BBEE-066F0CBD4BDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58E68DB2-0B49-4E6B-BBEE-066F0CBD4BDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58E68DB2-0B49-4E6B-BBEE-066F0CBD4BDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BACD9DC-36C3-4C41-8AE8-1AFB42331096}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BACD9DC-36C3-4C41-8AE8-1AFB42331096}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BACD9DC-36C3-4C41-8AE8-1AFB42331096}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BACD9DC-36C3-4C41-8AE8-1AFB42331096}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A92FA6F9-356B-42CD-BB90-2CA02DF323B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A92FA6F9-356B-42CD-BB90-2CA02DF323B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A92FA6F9-356B-42CD-BB90-2CA02DF323B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A92FA6F9-356B-42CD-BB90-2CA02DF323B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
