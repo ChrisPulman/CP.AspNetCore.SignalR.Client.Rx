@@ -58,6 +58,16 @@ public static class HubConnectionMixins
     /// <summary>
     /// Starts the specified connection.
     /// </summary>
+    /// <typeparam name="T">The type of the base.</typeparam>
+    /// <param name="ignore">The ignore.</param>
+    /// <param name="connection">The connection.</param>
+    /// <returns>Observable HubConnection.</returns>
+    public static IObservable<HubConnection> Start<T>(this IObservable<T> ignore, HubConnection connection) =>
+        ignore.Select(_ => connection).SelectMany(x => x.StartObservable().Select(_ => x));
+
+    /// <summary>
+    /// Starts the specified connection.
+    /// </summary>
     /// <param name="connection">The connection.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>
@@ -65,6 +75,19 @@ public static class HubConnectionMixins
     /// </returns>
     public static IObservable<HubConnection> Start(this IObservable<HubConnection> connection, CancellationToken cancellationToken = default) =>
         connection.SelectMany(x => x.StartObservable(cancellationToken).Select(_ => x));
+
+    /// <summary>
+    /// Starts the specified connection.
+    /// </summary>
+    /// <typeparam name="T">The type of the base.</typeparam>
+    /// <param name="ignore">The ignore.</param>
+    /// <param name="connection">The connection.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>
+    /// Observable HubConnection.
+    /// </returns>
+    public static IObservable<HubConnection> Start<T>(this IObservable<T> ignore, HubConnection connection, CancellationToken cancellationToken = default) =>
+        ignore.Select(_ => connection).SelectMany(x => x.StartObservable(cancellationToken).Select(_ => x));
 
     /// <summary>
     /// Stops a connection to the server.

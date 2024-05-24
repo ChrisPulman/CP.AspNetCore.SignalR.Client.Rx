@@ -19,7 +19,6 @@ namespace SignalRChatClient
     /// <seealso cref="System.Windows.Markup.IComponentConnector" />
     public partial class MainWindow : Window
     {
-        private IDisposable? _subscription;
         /// <summary>
         /// Initializes a new instance of the <see cref="MainWindow"/> class.
         /// </summary>
@@ -43,18 +42,13 @@ namespace SignalRChatClient
                         messagesList.Items.Add(error);
                     })));
 
-                    x.disposables.Add(connectButton.Events().Click.Subscribe(_ => Dispatcher.Invoke(() =>
+                    x.disposables.Add(connectButton.Events().Click.Start(connection).Subscribe(_ => Dispatcher.Invoke(() =>
                     {
                         try
                         {
-                            _subscription?.Dispose();
-                            _subscription = connection.StartObservable().Subscribe(_ => Dispatcher.Invoke(() =>
-                            {
-                                messagesList.Items.Add("Connection started");
-                                connectButton.IsEnabled = false;
-                                sendButton.IsEnabled = true;
-                            }));
-                            x.disposables.Add(_subscription);
+                            messagesList.Items.Add("Connection started");
+                            connectButton.IsEnabled = false;
+                            sendButton.IsEnabled = true;
                         }
                         catch (Exception ex)
                         {
