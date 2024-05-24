@@ -1,0 +1,81 @@
+﻿<Window
+    x:Class="SignalRChatClient.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:SignalRChatClient"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="SignalR Chat WPF Client"
+    Width="782"
+    Height="436"
+    mc:Ignorable="d">
+    <Grid Margin="0,0,193.333,50.667">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="109*" />
+            <ColumnDefinition Width="288*" />
+        </Grid.ColumnDefinitions>
+        <Button
+            x:Name="connectButton"
+            Grid.Column="1"
+            Width="95"
+            Height="41"
+            Margin="275.333,63,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Content="Connect" />
+        <Button
+            x:Name="sendButton"
+            Grid.Column="1"
+            Width="95"
+            Height="41"
+            Margin="275.333,113,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Content="Send Message"
+            IsEnabled="False" />
+        <TextBox
+            x:Name="messageTextBox"
+            Grid.ColumnSpan="2"
+            Width="311"
+            Height="41"
+            Margin="82,113,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            TextWrapping="Wrap" />
+        <ListBox
+            x:Name="messagesList"
+            Grid.ColumnSpan="2"
+            Width="311"
+            Height="141"
+            Margin="82,170,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            BorderBrush="Gainsboro"
+            BorderThickness="1"
+            RenderTransformOrigin="-0.304,0.109" />
+        <TextBox
+            x:Name="userTextBox"
+            Grid.ColumnSpan="2"
+            Width="311"
+            Height="41"
+            Margin="82,57,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            TextWrapping="Wrap" />
+        <Label
+            Width="38"
+            Height="31"
+            Margin="39,63,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Content="User" />
+        <Label
+            Width="58"
+            Height="26"
+            Margin="19,120,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Content="Message" />
+
+    </Grid>
+</Window>
