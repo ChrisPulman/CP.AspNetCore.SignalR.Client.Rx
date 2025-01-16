@@ -10,66 +10,66 @@ using CP.AspNetCore.SignalR.Client.Rx;
 using Microsoft.AspNetCore.SignalR.Client;
 using ReactiveMarbles.ObservableEvents;
 
-namespace SignalRChatClient
+namespace SignalRChatClient;
+
+/// <summary>
+/// MainWindow.
+/// </summary>
+/// <seealso cref="System.Windows.Window" />
+/// <seealso cref="System.Windows.Markup.IComponentConnector" />
+public partial class MainWindow : Window
 {
     /// <summary>
-    /// MainWindow.
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
-    /// <seealso cref="System.Windows.Window" />
-    /// <seealso cref="System.Windows.Markup.IComponentConnector" />
-    public partial class MainWindow : Window
+    public MainWindow()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MainWindow"/> class.
-        /// </summary>
-        public MainWindow()
-        {
-            InitializeComponent();
-            HubBuilder.Create(builder => builder.WithUrl("https://localhost:53933/ChatHub"))
-                .Subscribe(x =>
+        InitializeComponent();
+        HubBuilder.Create(builder => builder.WithUrl("https://localhost:53933/ChatHub"))
+            .Subscribe(x =>
+            {
+                var connection = x.hubConnection;
+                x.disposables.Add(connection.On<string, string>("ReceiveMessage").Subscribe(responce => Dispatcher.Invoke(() =>
                 {
-                    var connection = x.hubConnection;
-                    x.disposables.Add(connection.On<string, string>("ReceiveMessage").Subscribe(responce => Dispatcher.Invoke(() =>
-                    {
-                        var newMessage = $"{responce.t1}: {responce.t2}";
-                        messagesList.Items.Add(newMessage);
-                    })));
+                    var newMessage = $"{responce.t1}: {responce.t2}";
+                    messagesList.Items.Add(newMessage);
+                })));
 
-                    x.disposables.Add(connection.HasClosed().Subscribe(error => Dispatcher.Invoke(() =>
-                    {
-                        connectButton.IsEnabled = true;
-                        sendButton.IsEnabled = false;
-                        messagesList.Items.Add(error);
-                    })));
+                x.disposables.Add(connection.HasClosed().Subscribe(error => Dispatcher.Invoke(() =>
+                {
+                    connectButton.IsEnabled = true;
+                    sendButton.IsEnabled = false;
+                    messagesList.Items.Add(error);
+                })));
 
-                    x.disposables.Add(connectButton.Events().Click.Start(connection).Subscribe(_ => Dispatcher.Invoke(() =>
+                x.disposables.Add(connectButton.Events().Click.Start(connection).Subscribe(_ => Dispatcher.Invoke(() =>
+                {
+                    try
                     {
-                        try
-                        {
-                            messagesList.Items.Add("Connection started");
-                            connectButton.IsEnabled = false;
-                            sendButton.IsEnabled = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            messagesList.Items.Add(ex.Message);
-                        }
-                    })));
+                        messagesList.Items.Add("Connection started");
+                        connectButton.IsEnabled = false;
+                        sendButton.IsEnabled = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        messagesList.Items.Add(ex.Message);
+                    }
+                })));
 
-                    x.disposables.Add(sendButton.Events().Click.Subscribe(_ => Dispatcher.Invoke(async () =>
+                x.disposables.Add(sendButton.Events().Click.Subscribe(_ => Dispatcher.Invoke(async () =>
+                {
+                    try
                     {
-                        try
-                        {
-                            await connection.InvokeAsync("SendMessage", userTextBox.Text, messageTextBox.Text);
-                        }
-                        catch (Exception ex)
-                        {
-                            messagesList.Items.Add(ex.Message);
-                        }
-                    })));
-                });
-        }
+                        await connection.InvokeAsync("SendMessage", userTextBox.Text, messageTextBox.Text);
+                    }
+                    catch (Exception ex)
+                    {
+                        messagesList.Items.Add(ex.Message);
+                    }
+                })));
+            });
     }
+}
 
 #elif RETRY
 using System;
@@ -83,89 +83,88 @@ using ReactiveMarbles.ObservableEvents;
 
 namespace SignalRChatClient
 {
+/// <summary>
+/// MainWindow.
+/// </summary>
+/// <seealso cref="System.Windows.Window" />
+/// <seealso cref="System.Windows.Markup.IComponentConnector" />
+public partial class MainWindow : Window
+{
     /// <summary>
-    /// MainWindow.
+    /// Initializes a new instance of the <see cref="MainWindow"/> class.
     /// </summary>
-    /// <seealso cref="System.Windows.Window" />
-    /// <seealso cref="System.Windows.Markup.IComponentConnector" />
-    public partial class MainWindow : Window
+    public MainWindow()
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MainWindow"/> class.
-        /// </summary>
-        public MainWindow()
-        {
-            InitializeComponent();
-            HubBuilder.Create(builder =>
-                builder.WithUrl("https://localhost:53933/ChatHub")
-                       .WithAutomaticReconnect(new[] { TimeSpan.Zero, TimeSpan.Zero, TimeSpan.FromSeconds(10) }))
-                .Subscribe(x =>
+        InitializeComponent();
+        HubBuilder.Create(builder =>
+            builder.WithUrl("https://localhost:53933/ChatHub")
+                   .WithAutomaticReconnect(new[] { TimeSpan.Zero, TimeSpan.Zero, TimeSpan.FromSeconds(10) }))
+            .Subscribe(x =>
+            {
+                var connection = x.hubConnection;
+                x.disposables.Add(connection.HasClosed().Subscribe(error =>
+                    Debug.Assert(connection.State == HubConnectionState.Disconnected, "Disconnected")));
+
+                x.disposables.Add(connection.IsReconnecting().Subscribe(_ =>
+                    Debug.Assert(connection.State == HubConnectionState.Reconnecting, "Reconnecting")));
+
+                x.disposables.Add(connection.HasReconnected().Subscribe(_ =>
+                    Debug.Assert(connection.State == HubConnectionState.Connected, "Connected")));
+
+                x.disposables.Add(connectButton.Events().Click.Subscribe(async _ =>
                 {
-                    var connection = x.hubConnection;
-                    x.disposables.Add(connection.HasClosed().Subscribe(error =>
-                        Debug.Assert(connection.State == HubConnectionState.Disconnected, "Disconnected")));
-
-                    x.disposables.Add(connection.IsReconnecting().Subscribe(_ =>
-                        Debug.Assert(connection.State == HubConnectionState.Reconnecting, "Reconnecting")));
-
-                    x.disposables.Add(connection.HasReconnected().Subscribe(_ =>
-                        Debug.Assert(connection.State == HubConnectionState.Connected, "Connected")));
-
-                    x.disposables.Add(connectButton.Events().Click.Subscribe(async _ =>
+                    connection.On<string, string>("ReceiveMessage").Subscribe(x => Dispatcher.Invoke(() =>
                     {
-                        connection.On<string, string>("ReceiveMessage").Subscribe(x => Dispatcher.Invoke(() =>
-                        {
-                            var newMessage = $"{x.t1}: {x.t2}";
-                            messagesList.Items.Add(newMessage);
-                        }));
-
-                        try
-                        {
-                            ConnectWithRetryAsync(connection, default);
-                            messagesList.Items.Add("Connection started");
-                            connectButton.IsEnabled = false;
-                            sendButton.IsEnabled = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            messagesList.Items.Add(ex.Message);
-                        }
+                        var newMessage = $"{x.t1}: {x.t2}";
+                        messagesList.Items.Add(newMessage);
                     }));
 
-                    x.disposables.Add(sendButton.Events().Click.Subscribe(async _ =>
+                    try
                     {
-                        try
-                        {
-                            await connection.InvokeAsync("SendMessage", userTextBox.Text, messageTextBox.Text);
-                        }
-                        catch (Exception ex)
-                        {
-                            messagesList.Items.Add(ex.Message);
-                        }
-                    }));
-
-                    static void ConnectWithRetryAsync(HubConnection connection, CancellationToken token)
-                    {
-                        connection.StartObservable(token).Subscribe(
-                        _ =>
-                        {
-                            Debug.Assert(connection.State == HubConnectionState.Connected, "Connected");
-                        },
-                        ex =>
-                        {
-                            if (ex is OperationCanceledException)
-                            {
-                                Debug.Assert(token.IsCancellationRequested, "Canceled");
-                            }
-                            else
-                            {
-                                Debug.Assert(connection.State == HubConnectionState.Disconnected, "Disconnected");
-                            }
-                        },
-                        () => { });
+                        ConnectWithRetryAsync(connection, default);
+                        messagesList.Items.Add("Connection started");
+                        connectButton.IsEnabled = false;
+                        sendButton.IsEnabled = true;
                     }
-                });
-        }
+                    catch (Exception ex)
+                    {
+                        messagesList.Items.Add(ex.Message);
+                    }
+                }));
+
+                x.disposables.Add(sendButton.Events().Click.Subscribe(async _ =>
+                {
+                    try
+                    {
+                        await connection.InvokeAsync("SendMessage", userTextBox.Text, messageTextBox.Text);
+                    }
+                    catch (Exception ex)
+                    {
+                        messagesList.Items.Add(ex.Message);
+                    }
+                }));
+
+                static void ConnectWithRetryAsync(HubConnection connection, CancellationToken token)
+                {
+                    connection.StartObservable(token).Subscribe(
+                    _ =>
+                    {
+                        Debug.Assert(connection.State == HubConnectionState.Connected, "Connected");
+                    },
+                    ex =>
+                    {
+                        if (ex is OperationCanceledException)
+                        {
+                            Debug.Assert(token.IsCancellationRequested, "Canceled");
+                        }
+                        else
+                        {
+                            Debug.Assert(connection.State == HubConnectionState.Disconnected, "Disconnected");
+                        }
+                    },
+                    () => { });
+                }
+            });
     }
-#endif
 }
+#endif

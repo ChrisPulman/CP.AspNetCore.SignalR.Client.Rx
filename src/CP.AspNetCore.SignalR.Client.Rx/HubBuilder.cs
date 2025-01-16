@@ -1,11 +1,8 @@
 ﻿// Copyright (c) Chris Pulman. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Threading;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace CP.AspNetCore.SignalR.Client.Rx;
