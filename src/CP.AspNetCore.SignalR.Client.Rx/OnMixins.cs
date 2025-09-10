@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Chris Pulman. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Reactive;
 using System.Reactive.Linq;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -11,6 +12,19 @@ namespace CP.AspNetCore.SignalR.Client.Rx;
 /// </summary>
 public static class OnMixins
 {
+    /// <summary>
+    /// Registers a handler that will be invoked when the hub method with the specified method name is invoked.
+    /// </summary>
+    /// <param name="connection">The connection.</param>
+    /// <param name="methodName">Name of the method.</param>
+    /// <returns>An Observable of Unit.</returns>
+    public static IObservable<Unit> On(this HubConnection connection, string methodName) =>
+        Observable.Create<Unit>(observer =>
+        {
+            var handler = new Action(() => observer.OnNext(Unit.Default));
+            return connection.On(methodName, handler);
+        });
+
     /// <summary>
     /// Registers a handler that will be invoked when the hub method with the specified method name is invoked.
     /// </summary>
