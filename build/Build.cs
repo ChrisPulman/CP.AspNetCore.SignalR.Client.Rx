@@ -10,7 +10,6 @@ using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using Nuke.Common.Tools.PowerShell;
 using CP.BuildTools;
-using Nuke.Common.Tools.MSBuild;
 
 ////[GitHubActions(
 ////    "BuildOnly",
@@ -25,7 +24,7 @@ using Nuke.Common.Tools.MSBuild;
 ////    FetchDepth = 0,
 ////    ImportSecrets = new[] { nameof(NuGetApiKey) },
 ////    InvokedTargets = new[] { nameof(Compile), nameof(Deploy) })]
-partial class Build : NukeBuild
+sealed partial class Build : NukeBuild
 {
     //// Support plugins are available for:
     ////   - JetBrains ReSharper        https://nuke.build/resharper
@@ -65,10 +64,10 @@ partial class Build : NukeBuild
 
     Target Compile => _ => _
         .DependsOn(Restore, Print)
-        .Executes(() => MSBuildTasks.MSBuild(s => s
+        .Executes(() => DotNetBuild(s => s
                 .SetProjectFile(Solution)
                 .SetConfiguration(Configuration)
-                .SetRestore(false)));
+                .SetNoRestore(true)));
 
     Target Pack => _ => _
     .After(Compile)
