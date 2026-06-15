@@ -1,4 +1,4 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Copyright (c) Chris Pulman. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #define DEFAULT
@@ -12,16 +12,12 @@ using ReactiveMarbles.ObservableEvents;
 
 namespace SignalRChatClient;
 
-/// <summary>
-/// MainWindow.
-/// </summary>
-/// <seealso cref="System.Windows.Window" />
+/// <summary>Main application window.</summary>
+/// <seealso cref="Window" />
 /// <seealso cref="System.Windows.Markup.IComponentConnector" />
 public partial class MainWindow : Window
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MainWindow"/> class.
-    /// </summary>
+    /// <summary>Initializes a new instance of the <see cref="MainWindow"/> class.</summary>
     public MainWindow()
     {
         InitializeComponent();

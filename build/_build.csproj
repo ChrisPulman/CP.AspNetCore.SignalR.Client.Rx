@@ -4,7 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace></RootNamespace>
-    <NoWarn>CS0649;CS0169;CA1050;CA1822;CA2211;IDE1006</NoWarn>
+    <NoWarn>CS0649;CS0169;CA1050;CA1822;CA2211;IDE1006;IDE0051</NoWarn>
     <NukeRootDirectory>..</NukeRootDirectory>
     <NukeScriptDirectory>..</NukeScriptDirectory>
     <NukeTelemetryVersion>1</NukeTelemetryVersion>
@@ -14,8 +14,8 @@
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50" />
     <PackageReference Include="Nuke.Common" Version="10.1.0" />
-    <PackageReference Include="CP.Nuke.BuildTools" Version="2.0.16" />
-    <PackageReference Include="System.Formats.Asn1" Version="10.0.5" />
+    <PackageReference Include="CP.Nuke.BuildTools" Version="3.0.2" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
   </ItemGroup>
 
   <ItemGroup>

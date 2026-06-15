@@ -1,19 +1,15 @@
-﻿// Copyright (c) Chris Pulman. All rights reserved.
+// Copyright (c) Chris Pulman. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.AspNetCore.SignalR;
 
 namespace SignalRChat.Hubs;
 
-/// <summary>
-/// ChatHub.
-/// </summary>
-/// <seealso cref="Microsoft.AspNetCore.SignalR.Hub" />
+/// <summary>SignalR chat hub.</summary>
+/// <seealso cref="Hub" />
 public class ChatHub : Hub
 {
-    /// <summary>
-    /// Sends the message.
-    /// </summary>
+    /// <summary>Sends the message.</summary>
     /// <param name="user">The user.</param>
     /// <param name="message">The message.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
