@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.9" />
-    <PackageReference Include="TUnit" Version="1.56.25" />
+    <PackageReference Include="TUnit" Version="1.56.35" />
   </ItemGroup>
 
   <ItemGroup>
