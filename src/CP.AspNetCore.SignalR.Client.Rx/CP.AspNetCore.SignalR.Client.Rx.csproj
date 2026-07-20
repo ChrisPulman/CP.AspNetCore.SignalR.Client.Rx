@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="$(TargetFramework.StartsWith('net8'))">
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.28" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.29" />
   </ItemGroup>
 
   <ItemGroup>
