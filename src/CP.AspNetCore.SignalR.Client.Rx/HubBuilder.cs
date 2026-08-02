@@ -1,12 +1,12 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using Microsoft.AspNetCore.SignalR.Client;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx;
+#endif
 
 /// <summary>Builds observable SignalR hub connections.</summary>
 public static class HubBuilder
@@ -16,31 +16,36 @@ public static class HubBuilder
     /// <returns>A HubConnection.</returns>
     public static IObservable<(HubConnection hubConnection, CompositeDisposable disposables)> Create(Func<HubConnectionBuilder, IHubConnectionBuilder> hubConnectionBuilder)
     {
-        if (hubConnectionBuilder is null)
-        {
-            throw new ArgumentNullException(nameof(hubConnectionBuilder));
-        }
+        _ = hubConnectionBuilder ?? throw new ArgumentNullException(nameof(hubConnectionBuilder));
 
-        return Observable.Create<(HubConnection hubConnection, CompositeDisposable disposables)>(observer =>
+        return Observable.CreateSafe<(HubConnection hubConnection, CompositeDisposable disposables)>(observer =>
         {
             var disposables = new CompositeDisposable();
-            var connection = hubConnectionBuilder(new HubConnectionBuilder()).Build();
+            var connection = hubConnectionBuilder(new()).Build();
             observer.OnNext((connection, disposables));
-            disposables.Add(Disposable.Create(async () => await DisposeConnectionAsync(connection)));
+            disposables.Add(Disposable.Create(connection, DisposeConnection));
             return disposables;
         });
     }
 
-    /// <summary>Disposes the hub connection asynchronously.</summary>
+    /// <summary>Disposes the hub connection.</summary>
     /// <param name="connection">The hub connection.</param>
-    /// <returns>A task that represents the asynchronous dispose operation.</returns>
-    private static async Task DisposeConnectionAsync(HubConnection connection)
-    {
-        if (connection is null)
-        {
-            return;
-        }
+    private static void DisposeConnection(HubConnection connection) =>
+        ObserveDisposal(connection.DisposeAsync());
 
-        await connection.DisposeAsync();
+    /// <summary>Observes a pending asynchronous disposal operation.</summary>
+    /// <param name="disposal">The disposal operation.</param>
+    private static void ObserveDisposal(ValueTask disposal) =>
+        new DisposeContinuation(disposal.GetAwaiter()).Register();
+
+    /// <summary>Observes asynchronous connection disposal without blocking the disposing thread.</summary>
+    /// <param name="awaiter">The disposal awaiter.</param>
+    private sealed class DisposeContinuation(ValueTaskAwaiter awaiter)
+    {
+        /// <summary>Registers the completion callback.</summary>
+        public void Register() => awaiter.OnCompleted(Complete);
+
+        /// <summary>Observes the asynchronous disposal result.</summary>
+        private void Complete() => awaiter.GetResult();
     }
 }

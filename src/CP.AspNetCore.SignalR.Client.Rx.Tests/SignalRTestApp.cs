@@ -1,19 +1,17 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx.Tests;
+#endif
 
 /// <summary>Hosts an in-memory SignalR app for tests.</summary>
 internal sealed class SignalRTestApp : IAsyncDisposable
 {
+    /// <summary>The in-memory test host.</summary>
     private readonly IHost _host;
 
     /// <summary>Initializes a new instance of the <see cref="SignalRTestApp"/> class.</summary>
@@ -28,32 +26,33 @@ internal sealed class SignalRTestApp : IAsyncDisposable
     }
 
     /// <summary>Gets the SignalR client connection.</summary>
-    public HubConnection Connection { get; }
+    internal HubConnection Connection { get; }
 
     /// <summary>Gets server-side test events.</summary>
-    public TestHubEvents Events { get; }
+    internal TestHubEvents Events { get; }
 
     /// <summary>Creates and starts the in-memory SignalR host.</summary>
     /// <returns>A task that returns the test app.</returns>
-    public static async Task<SignalRTestApp> CreateAsync()
+    internal static async Task<SignalRTestApp> CreateAsync()
     {
         var host = await new HostBuilder()
-            .ConfigureWebHost(webBuilder =>
+            .ConfigureWebHost(static webBuilder =>
             {
-                webBuilder
+                _ = webBuilder
                     .UseTestServer()
-                    .ConfigureServices(services =>
+                    .ConfigureServices(static services =>
                     {
-                        services.AddSignalR(options => options.EnableDetailedErrors = true);
-                        services.AddSingleton<TestHubEvents>();
+                        _ = services.AddSignalR(static options => options.EnableDetailedErrors = true);
+                        _ = services.AddSingleton<TestHubEvents>();
                     })
-                    .Configure(app =>
+                    .Configure(static app =>
                     {
-                        app.UseRouting();
-                        app.UseEndpoints(endpoints => endpoints.MapHub<TestHub>("/testHub"));
+                        _ = app.UseRouting();
+                        _ = app.UseEndpoints(static endpoints => _ = endpoints.MapHub<TestHub>("/testHub"));
                     });
             })
-            .StartAsync();
+            .StartAsync()
+            .ConfigureAwait(false);
 
         var server = host.GetTestServer();
         var connection = new HubConnectionBuilder()
@@ -61,15 +60,15 @@ internal sealed class SignalRTestApp : IAsyncDisposable
             .Build();
         var events = host.Services.GetRequiredService<TestHubEvents>();
 
-        return new SignalRTestApp(host, connection, events);
+        return new(host, connection, events);
     }
 
     /// <summary>Disposes the client connection and in-memory host.</summary>
     /// <returns>A task that represents the asynchronous dispose operation.</returns>
-    public async ValueTask DisposeAsync()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
-        await Connection.DisposeAsync();
-        await _host.StopAsync();
+        await Connection.DisposeAsync().ConfigureAwait(false);
+        await _host.StopAsync().ConfigureAwait(false);
         _host.Dispose();
     }
 }

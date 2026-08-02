@@ -1,5 +1,4 @@
-using System.ComponentModel;
-using Nuke.Common.Tooling;
+namespace CP.AspNetCore.SignalR.Client.Rx.Build;
 
 [TypeConverter(typeof(TypeConverter<Configuration>))]
 public class Configuration : Enumeration

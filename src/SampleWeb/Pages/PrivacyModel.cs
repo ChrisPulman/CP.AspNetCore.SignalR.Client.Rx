@@ -2,4 +2,8 @@
 // Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-[assembly: ThemeInfo(ResourceDictionaryLocation.None, ResourceDictionaryLocation.SourceAssembly)]
+namespace SignalRChat.Pages;
+
+/// <summary>Privacy page model.</summary>
+/// <seealso cref="PageModel" />
+public class PrivacyModel : PageModel;

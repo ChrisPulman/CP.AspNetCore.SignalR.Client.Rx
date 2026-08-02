@@ -1,49 +1,51 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using SignalRChat.Hubs;
+namespace SignalRChat;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddRazorPages();
-
-builder.Services.AddSignalR();
-
-builder.Services.AddCors(options =>
+/// <summary>Hosts the SignalR sample application.</summary>
+public static class Program
 {
-    options.AddDefaultPolicy(
-        builder =>
+    /// <summary>Runs the sample application.</summary>
+    /// <param name="args">Command-line arguments.</param>
+    /// <returns>A task that represents the application lifetime.</returns>
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+
+        _ = builder.Services.AddRazorPages();
+        _ = builder.Services.AddSignalR();
+        _ = builder.Services.AddCors(static options =>
         {
-            builder.WithOrigins("https://example.com")
-                .AllowAnyHeader()
-                .WithMethods("GET", "POST")
-                .AllowCredentials();
+            options.AddDefaultPolicy(
+                static policyBuilder =>
+                {
+                    _ = policyBuilder.WithOrigins("https://example.com")
+                        .AllowAnyHeader()
+                        .WithMethods("GET", "POST")
+                        .AllowCredentials();
+                });
         });
-});
 
-var app = builder.Build();
+        var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
+        if (!app.Environment.IsDevelopment())
+        {
+            _ = app.UseExceptionHandler("/Error");
+            _ = app.UseHsts();
+        }
 
-    app.UseHsts();
+        _ = app.UseHttpsRedirection();
+        _ = app.UseStaticFiles();
+        _ = app.UseRouting();
+        _ = app.UseAuthorization();
+
+        // UseCors must be called before MapHub.
+        _ = app.UseCors();
+        _ = app.MapRazorPages();
+        _ = app.MapHub<ChatHub>("/chatHub");
+
+        await app.RunAsync().ConfigureAwait(false);
+    }
 }
-
-app.UseHttpsRedirection();
-
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthorization();
-
-// UseCors must be called before MapHub.
-app.UseCors();
-
-app.MapRazorPages();
-
-app.MapHub<ChatHub>("/chatHub");
-
-app.Run();

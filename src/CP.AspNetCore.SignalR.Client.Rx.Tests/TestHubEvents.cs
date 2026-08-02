@@ -1,14 +1,17 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Threading.Channels;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx.Tests;
+#endif
 
 /// <summary>Stores server-side events observed by tests.</summary>
 public sealed class TestHubEvents
 {
+    /// <summary>The channel containing server notifications.</summary>
     private readonly Channel<string> _notifications = Channel.CreateUnbounded<string>();
 
     /// <summary>Gets the last observed SignalR connection identifier.</summary>

@@ -1,16 +1,19 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reactive.Linq;
-using System.Reactive.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx.Tests;
+#endif
 
 /// <summary>Tests observable start triggers.</summary>
 public sealed class OnMixinsTests
 {
+    /// <summary>The maximum duration of an asynchronous test operation.</summary>
+    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(5);
+
     /// <summary>Verifies that observable hub connection sources start and emit their connections.</summary>
     /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
@@ -21,7 +24,7 @@ public sealed class OnMixinsTests
         var startedConnection = await Observable.Return(app.Connection)
             .Start()
             .ToTask()
-            .WaitAsync(TimeSpan.FromSeconds(5));
+            .WaitAsync(TestTimeout);
 
         await Assert.That(startedConnection).IsSameReferenceAs(app.Connection);
         await Assert.That(startedConnection.State).IsEqualTo(HubConnectionState.Connected);
@@ -37,7 +40,7 @@ public sealed class OnMixinsTests
         var startedConnection = await Observable.Return("trigger")
             .Start(app.Connection)
             .ToTask()
-            .WaitAsync(TimeSpan.FromSeconds(5));
+            .WaitAsync(TestTimeout);
 
         await Assert.That(startedConnection).IsSameReferenceAs(app.Connection);
         await Assert.That(startedConnection.State).IsEqualTo(HubConnectionState.Connected);

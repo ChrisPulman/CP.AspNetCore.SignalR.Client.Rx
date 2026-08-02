@@ -1,17 +1,20 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Runtime.CompilerServices;
-using System.Threading.Channels;
-using Microsoft.AspNetCore.SignalR;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx.Tests;
+#endif
 
 /// <summary>SignalR hub used by the observable extension tests.</summary>
 /// <param name="events">The server-side test event sink.</param>
 public sealed class TestHub(TestHubEvents events) : Hub
 {
+    /// <summary>The number of values emitted by the fixed-length stream.</summary>
+    private const int CountStreamLength = 3;
+
     /// <summary>Sends a parameterless callback to the caller.</summary>
     /// <returns>A task that represents the asynchronous send operation.</returns>
     public Task SendPing() => Clients.Caller.SendAsync("Ping");
@@ -26,6 +29,24 @@ public sealed class TestHub(TestHubEvents events) : Hub
     /// <param name="right">The second value.</param>
     /// <returns>A task that represents the asynchronous send operation.</returns>
     public Task SendPair(string left, string right) => Clients.Caller.SendAsync("Pair", left, right);
+
+    /// <summary>Sends a variable number of integer callback arguments to the caller.</summary>
+    /// <param name="methodName">The callback method name.</param>
+    /// <param name="count">The number of one-based values to send.</param>
+    /// <returns>A task that represents the asynchronous send operation.</returns>
+    public Task SendValues(string methodName, int count)
+    {
+        var values = new object?[count];
+        for (var index = 0; index < count; index++)
+        {
+            values[index] = index + 1;
+        }
+
+        return Clients.Caller.SendCoreAsync(methodName, values);
+    }
+
+    /// <summary>Aborts the current connection so automatic reconnect behavior can be observed.</summary>
+    public void AbortConnection() => Context.Abort();
 
     /// <summary>Returns the supplied value.</summary>
     /// <param name="value">The value to return.</param>
@@ -44,11 +65,11 @@ public sealed class TestHub(TestHubEvents events) : Hub
     /// <summary>Streams three values using async enumerable streaming.</summary>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An async sequence of values.</returns>
-    public async IAsyncEnumerable<int> CountStream([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<int> CountStream([EnumeratorCancellation] CancellationToken cancellationToken)
     {
         events.ObserveConnection(Context.ConnectionId);
 
-        for (var value = 1; value <= 3; value++)
+        for (var value = 1; value <= CountStreamLength; value++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             yield return value;
@@ -60,7 +81,7 @@ public sealed class TestHub(TestHubEvents events) : Hub
     /// <param name="count">The number of values to stream.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A channel reader for the streamed values.</returns>
-    public ChannelReader<int> CountChannel(int count, CancellationToken cancellationToken = default)
+    public ChannelReader<int> CountChannel(int count, CancellationToken cancellationToken)
     {
         events.ObserveConnection(Context.ConnectionId);
 
