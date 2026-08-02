@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,6 +6,8 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);REACTIVE_SHIM</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,12 +16,18 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
-    <PackageReference Include="ReactiveUI.Primitives" />
+    <PackageReference Include="ReactiveUI.Primitives.Reactive" />
     <PackageReference Include="TUnit" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CP.AspNetCore.SignalR.Client.Rx\CP.AspNetCore.SignalR.Client.Rx.csproj" />
+    <ProjectReference Include="..\CP.AspNetCore.SignalR.Client.Rx.Reactive\CP.AspNetCore.SignalR.Client.Rx.Reactive.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\CP.AspNetCore.SignalR.Client.Rx.Tests\**\*.cs"
+             Exclude="..\CP.AspNetCore.SignalR.Client.Rx.Tests\bin\**;..\CP.AspNetCore.SignalR.Client.Rx.Tests\obj\**"
+             Link="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,11 +46,11 @@
     <Using Include="Microsoft.AspNetCore.TestHost" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Hosting" />
-    <Using Include="ReactiveUI.Primitives" />
-    <Using Include="ReactiveUI.Primitives.Extensions" />
-    <Using Include="ReactiveUI.Primitives.Disposables.MultipleDisposable" Alias="CompositeDisposable" />
-    <Using Include="ReactiveUI.Primitives.RxVoid" Alias="RxVoid" />
-    <Using Include="ReactiveUI.Primitives.Signals.Signal" Alias="Observable" />
+    <Using Include="ReactiveUI.Primitives.Reactive" />
+    <Using Include="ReactiveUI.Primitives.Extensions.Reactive" />
+    <Using Include="System.Reactive.Disposables.CompositeDisposable" Alias="CompositeDisposable" />
+    <Using Include="System.Reactive.Unit" Alias="RxVoid" />
+    <Using Include="ReactiveUI.Primitives.Reactive.Signals.Signal" Alias="Observable" />
     <Using Include="TUnit.Core" />
   </ItemGroup>
 

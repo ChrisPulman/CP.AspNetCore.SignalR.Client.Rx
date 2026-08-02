@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/Config/">
+    <File Path="../.editorconfig" />
+    <File Path="../Directory.Build.props" />
+    <File Path="../Directory.Packages.props" />
+    <File Path="../global.json" />
+    <File Path="../LICENSE" />
+    <File Path="../README.md" />
+    <File Path="../stylecop.json" />
+    <File Path="../testconfig.json" />
+    <File Path="../version.json" />
+  </Folder>
+  <Project Path="../build/_build.csproj">
+    <Build Project="false" />
+  </Project>
+  <Project Path="CP.AspNetCore.SignalR.Client.Rx.Tests/CP.AspNetCore.SignalR.Client.Rx.Tests.csproj" />
+  <Project Path="CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests/CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests.csproj" />
+  <Project Path="CP.AspNetCore.SignalR.Client.Rx/CP.AspNetCore.SignalR.Client.Rx.csproj" />
+  <Project Path="CP.AspNetCore.SignalR.Client.Rx.Reactive/CP.AspNetCore.SignalR.Client.Rx.Reactive.csproj" />
+  <Project Path="SampleWeb/SignalRChat.csproj" />
+  <Project Path="WpfClient/SignalRChatClient.csproj" />
+</Solution>

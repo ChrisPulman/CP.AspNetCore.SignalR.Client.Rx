@@ -1,14 +1,12 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reactive;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Threading.Channels;
-using Microsoft.AspNetCore.SignalR.Client;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx;
+#endif
 
 /// <summary>HubConnection Mixins.</summary>
 public static class HubConnectionMixins
@@ -20,87 +18,73 @@ public static class HubConnectionMixins
         /// <summary>Starts a connection to the server.</summary>
         /// <returns>An Observable that completes when the connection has started.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> StartObservable()
+        public IObservable<RxVoid> StartObservable()
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(() => connection.StartAsync()).Retry();
+            return Observable.FromAsync(() => ToRxVoidAsync(connection.StartAsync())).OnErrorRetry();
         }
 
         /// <summary>Starts a connection to the server.</summary>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None" />.</param>
         /// <returns>An Observable that completes when the connection has started.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> StartObservable(CancellationToken cancellationToken = default)
+        public IObservable<RxVoid> StartObservable(CancellationToken cancellationToken)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(() => connection.StartAsync(cancellationToken)).Retry();
+            return Observable.FromAsync(() => ToRxVoidAsync(connection.StartAsync(cancellationToken))).OnErrorRetry();
         }
 
         /// <summary>Starts a connection to the server with a retry count.</summary>
         /// <param name="retryCount">Number of retry attempts on failure. Default infinite (<c>null</c>).</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>An Observable that completes when the connection has started.</returns>
-        public IObservable<Unit> StartObservable(int? retryCount, CancellationToken cancellationToken = default)
+        public IObservable<RxVoid> StartObservable(int? retryCount, CancellationToken cancellationToken)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            var src = Observable.FromAsync(() => connection.StartAsync(cancellationToken));
-            return retryCount.HasValue ? src.Retry(retryCount.Value) : src.Retry();
+            var source = Observable.FromAsync(() => ToRxVoidAsync(connection.StartAsync(cancellationToken)));
+            return ApplyRetry(source, retryCount);
         }
 
         /// <summary>Ensure a connection is started. If already connected, completes immediately.</summary>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>An Observable that completes when the connection has stopped.</returns>
+        /// <returns>An observable that completes when the connection has started.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> EnsureStarted(CancellationToken cancellationToken = default)
+        public IObservable<RxVoid> EnsureStarted() => connection.EnsureStarted(default);
+
+        /// <summary>Ensure a connection is started. If already connected, completes immediately.</summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>An observable that completes when the connection has started.</returns>
+        /// <exception cref="ArgumentNullException">connection.</exception>
+        public IObservable<RxVoid> EnsureStarted(CancellationToken cancellationToken)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             return connection.State == HubConnectionState.Disconnected
                 ? connection.StartObservable(cancellationToken)
-                : Observable.Return(Unit.Default);
+                : Observable.Return(RxVoid.Default);
         }
 
         /// <summary>Stops a connection to the server.</summary>
         /// <returns>An Observable that completes when the connection has stopped.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> StopObservable()
+        public IObservable<RxVoid> StopObservable()
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(connection.StopAsync).Retry();
+            return Observable.FromAsync(() => ToRxVoidAsync(connection.StopAsync())).OnErrorRetry();
         }
 
         /// <summary>Stops a connection to the server.</summary>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None" />.</param>
         /// <returns>An Observable that completes when the connection has stopped.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1047:Non-asynchronous method name should not end with 'Async'.", Justification = "Replicating base function.")]
-        public IObservable<Unit> StopObservable(CancellationToken cancellationToken = default)
+        public IObservable<RxVoid> StopObservable(CancellationToken cancellationToken)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(() => connection.StopAsync(cancellationToken)).Retry();
+            return Observable.FromAsync(() => ToRxVoidAsync(connection.StopAsync(cancellationToken))).OnErrorRetry();
         }
 
         /// <summary>Stops a connection to the server with a retry count.</summary>
@@ -108,129 +92,105 @@ public static class HubConnectionMixins
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>An Observable that completes when the connection has stopped.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> StopObservable(int? retryCount, CancellationToken cancellationToken = default)
+        public IObservable<RxVoid> StopObservable(int? retryCount, CancellationToken cancellationToken)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            var src = Observable.FromAsync(() => connection.StopAsync(cancellationToken));
-            return retryCount.HasValue ? src.Retry(retryCount.Value) : src.Retry();
+            var source = Observable.FromAsync(() => ToRxVoidAsync(connection.StopAsync(cancellationToken)));
+            return ApplyRetry(source, retryCount);
         }
 
         /// <summary>Invokes a streaming hub method on the server using the specified method name and return type.</summary>
         /// <typeparam name="T">The return type of the streaming server method.</typeparam>
-        /// <param name="methodName">Name of the method.</param>
+        /// <param name="method">The strongly typed hub method.</param>
         /// <param name="cancellationToken">The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None" />.</param>
         /// <returns>
         /// A <see cref="IObservable{T}" /> that represents the stream.
         /// </returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<T> StreamObservable<T>(string methodName, CancellationToken cancellationToken = default)
+        public IObservable<T> StreamObservable<T>(HubMethod<T> method, CancellationToken cancellationToken)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             // Use a CTS linked to the subscription so we can cancel the streaming when disposed.
-            return Observable.Create<T>(observer =>
+            return Observable.Create<T>(async (observer, subscriptionToken) =>
             {
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, subscriptionToken);
 
-                _ = Task.Run(
-                    async () =>
+                try
                 {
-                    try
+                    await foreach (var item in connection.StreamAsync<T>(method.Name, cts.Token).WithCancellation(cts.Token).ConfigureAwait(false))
                     {
-                        await foreach (var x in connection.StreamAsync<T>(methodName, cts.Token).WithCancellation(cts.Token).ConfigureAwait(false))
-                        {
-                            observer.OnNext(x);
-                        }
+                        observer.OnNext(item);
+                    }
 
-                        observer.OnCompleted();
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Swallow cancellation; treat as completion.
-                        observer.OnCompleted();
-                    }
-                    catch (Exception ex)
-                    {
-                        observer.OnError(ex);
-                    }
-                },
-                    cts.Token);
+                    observer.OnCompleted();
+                }
+                catch (OperationCanceledException)
+                {
+                    observer.OnCompleted();
+                }
+                catch (Exception error)
+                {
+                    observer.OnError(error);
+                }
 
-                return Disposable.Create(() => cts.Cancel());
+                return Disposable.Empty;
             });
         }
 
         /// <summary>Invokes a streaming hub method on the server using the specified method name, return type and arguments.</summary>
         /// <typeparam name="T">The return type of the streaming server method.</typeparam>
-        /// <param name="methodName">Name of the method.</param>
+        /// <param name="method">The strongly typed hub method.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <param name="args">Arguments for the hub method.</param>
         /// <returns>A <see cref="IObservable{T}"/> that represents the stream.</returns>
-        public IObservable<T> StreamObservable<T>(string methodName, CancellationToken cancellationToken = default, params object?[] args)
+        public IObservable<T> StreamObservable<T>(HubMethod<T> method, CancellationToken cancellationToken, params object?[] args)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.Create<T>(observer =>
+            return Observable.Create<T>(async (observer, subscriptionToken) =>
             {
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, subscriptionToken);
 
-                _ = Task.Run(
-                    async () =>
+                try
                 {
-                    try
+                    var reader = await connection.StreamAsChannelCoreAsync<T>(method.Name, args, cts.Token).ConfigureAwait(false);
+                    while (await reader.WaitToReadAsync(cts.Token).ConfigureAwait(false))
                     {
-                        // Prefer ChannelReader for efficiency, then drain it.
-                        var reader = await connection.StreamAsChannelCoreAsync<T>(methodName, args, cts.Token).ConfigureAwait(false);
-                        while (await reader.WaitToReadAsync(cts.Token).ConfigureAwait(false))
+                        while (reader.TryRead(out var item))
                         {
-                            while (reader.TryRead(out var item))
-                            {
-                                observer.OnNext(item);
-                            }
+                            observer.OnNext(item);
                         }
+                    }
 
-                        observer.OnCompleted();
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        observer.OnCompleted();
-                    }
-                    catch (Exception ex)
-                    {
-                        observer.OnError(ex);
-                    }
-                },
-                    cts.Token);
+                    observer.OnCompleted();
+                }
+                catch (OperationCanceledException)
+                {
+                    observer.OnCompleted();
+                }
+                catch (Exception error)
+                {
+                    observer.OnError(error);
+                }
 
-                return Disposable.Create(() => cts.Cancel());
+                return Disposable.Empty;
             });
         }
 
         /// <summary>Invokes a hub method on the server using the specified method name and arguments and returns a result as an observable.</summary>
         /// <typeparam name="T">The return type of the streaming server method.</typeparam>
-        /// <param name="methodName">Name of the method.</param>
+        /// <param name="method">The strongly typed hub method.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <param name="args">The arguments.</param>
         /// <returns>A <see cref="IObservable{T}"/> that represents the stream.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<T> InvokeObservable<T>(string methodName, CancellationToken cancellationToken = default, params object?[] args)
+        public IObservable<T> InvokeObservable<T>(HubMethod<T> method, CancellationToken cancellationToken, params object?[] args)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(() => connection.InvokeCoreAsync<T>(methodName, args, cancellationToken));
+            return Observable.FromAsync(() => connection.InvokeCoreAsync<T>(method.Name, args, cancellationToken));
         }
 
         /// <summary>
@@ -241,14 +201,11 @@ public static class HubConnectionMixins
         /// <param name="args">The arguments.</param>
         /// <returns>A <see cref="IObservable{T}"/> that represents the stream.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> InvokeObservable(string methodName, CancellationToken cancellationToken = default, params object?[] args)
+        public IObservable<RxVoid> InvokeObservable(string methodName, CancellationToken cancellationToken, params object?[] args)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(() => connection.InvokeCoreAsync(methodName, args, cancellationToken));
+            return Observable.FromAsync(() => ToRxVoidAsync(connection.InvokeCoreAsync(methodName, args, cancellationToken)));
         }
 
         /// <summary>Sends a hub method on the server using the specified method name and arguments and returns completion as an observable.</summary>
@@ -257,14 +214,11 @@ public static class HubConnectionMixins
         /// <param name="args">The arguments.</param>
         /// <returns>A <see cref="IObservable{T}"/> that represents the stream.</returns>
         /// <exception cref="ArgumentNullException">connection.</exception>
-        public IObservable<Unit> SendObservable(string methodName, CancellationToken cancellationToken = default, params object?[] args)
+        public IObservable<RxVoid> SendObservable(string methodName, CancellationToken cancellationToken, params object?[] args)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
-            return Observable.FromAsync(() => connection.SendCoreAsync(methodName, args, cancellationToken));
+            return Observable.FromAsync(() => ToRxVoidAsync(connection.SendCoreAsync(methodName, args, cancellationToken)));
         }
 
         /// <summary>
@@ -275,10 +229,7 @@ public static class HubConnectionMixins
         /// <exception cref="ArgumentNullException">connection.</exception>
         public IObservable<Exception?> HasClosed()
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             return Observable.Create<Exception?>(observer =>
             {
@@ -290,7 +241,9 @@ public static class HubConnectionMixins
 
                 connection.Closed += ClosedHandler;
 
-                return Disposable.Create(() => connection.Closed -= ClosedHandler);
+                return Disposable.Create<(HubConnection connection, Func<Exception?, Task> handler)>(
+                    (connection, ClosedHandler),
+                    static state => state.connection.Closed -= state.handler);
             });
         }
 
@@ -299,10 +252,7 @@ public static class HubConnectionMixins
         /// <exception cref="ArgumentNullException">connection.</exception>
         public IObservable<Exception?> IsReconnecting()
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             return Observable.Create<Exception?>(observer =>
             {
@@ -314,7 +264,9 @@ public static class HubConnectionMixins
 
                 connection.Reconnecting += ReconnectingHandler;
 
-                return Disposable.Create(() => connection.Reconnecting -= ReconnectingHandler);
+                return Disposable.Create<(HubConnection connection, Func<Exception?, Task> handler)>(
+                    (connection, ReconnectingHandler),
+                    static state => state.connection.Reconnecting -= state.handler);
             });
         }
 
@@ -323,10 +275,7 @@ public static class HubConnectionMixins
         /// <exception cref="ArgumentNullException">connection.</exception>
         public IObservable<string?> HasReconnected()
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             return Observable.Create<string?>(observer =>
             {
@@ -338,7 +287,9 @@ public static class HubConnectionMixins
 
                 connection.Reconnected += ReconnectedHandler;
 
-                return Disposable.Create(() => connection.Reconnected -= ReconnectedHandler);
+                return Disposable.Create<(HubConnection connection, Func<string?, Task> handler)>(
+                    (connection, ReconnectedHandler),
+                    static state => state.connection.Reconnected -= state.handler);
             });
         }
 
@@ -347,10 +298,7 @@ public static class HubConnectionMixins
         /// <exception cref="ArgumentNullException">connection.</exception>
         public IObservable<HubConnectionState> StateChanges()
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             return Observable.Merge(
                     connection.HasClosed().Select(_ => connection.State),
@@ -366,10 +314,7 @@ public static class HubConnectionMixins
         /// <exception cref="ArgumentNullException">connection.</exception>
         public IObservable<HubConnectionState> WaitForState(HubConnectionState desiredState)
         {
-            if (connection is null)
-            {
-                throw new ArgumentNullException(nameof(connection));
-            }
+            _ = connection ?? throw new ArgumentNullException(nameof(connection));
 
             return connection.StateChanges().Where(s => s == desiredState).Take(1);
         }
@@ -389,14 +334,14 @@ public static class HubConnectionMixins
         /// <returns>
         /// Observable HubConnection.
         /// </returns>
-        public IObservable<HubConnection> Start(CancellationToken cancellationToken = default) =>
+        public IObservable<HubConnection> Start(CancellationToken cancellationToken) =>
             connection.SelectMany(x => x.StartObservable(cancellationToken).Select(_ => x));
 
         /// <summary>Starts the specified connection with a retry count.</summary>
         /// <param name="retryCount">Number of retry attempts on failure. Default infinite (<c>null</c>).</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>Observable HubConnection.</returns>
-        public IObservable<HubConnection> Start(int? retryCount, CancellationToken cancellationToken = default) =>
+        public IObservable<HubConnection> Start(int? retryCount, CancellationToken cancellationToken) =>
             connection.SelectMany(x => x.StartObservable(retryCount, cancellationToken).Select(_ => x));
     }
 
@@ -417,7 +362,7 @@ public static class HubConnectionMixins
         /// <returns>
         /// Observable HubConnection.
         /// </returns>
-        public IObservable<HubConnection> Start(HubConnection connection, CancellationToken cancellationToken = default) =>
+        public IObservable<HubConnection> Start(HubConnection connection, CancellationToken cancellationToken) =>
             ignore.Select(_ => connection).SelectMany(x => x.StartObservable(cancellationToken).Select(_ => x));
 
         /// <summary>Starts the specified connection with a retry count.</summary>
@@ -425,7 +370,32 @@ public static class HubConnectionMixins
         /// <param name="retryCount">Number of retry attempts on failure. Default infinite (<c>null</c>).</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>Observable HubConnection.</returns>
-        public IObservable<HubConnection> Start(HubConnection connection, int? retryCount, CancellationToken cancellationToken = default) =>
+        public IObservable<HubConnection> Start(HubConnection connection, int? retryCount, CancellationToken cancellationToken) =>
             ignore.Select(_ => connection).SelectMany(x => x.StartObservable(retryCount, cancellationToken).Select(_ => x));
+    }
+
+    /// <summary>Applies classic Rx retry-count semantics to a source.</summary>
+    /// <param name="source">The source observable.</param>
+    /// <param name="retryCount">Total permitted subscriptions, or <see langword="null"/> for unbounded retry.</param>
+    /// <returns>The retried observable.</returns>
+    private static IObservable<RxVoid> ApplyRetry(IObservable<RxVoid> source, int? retryCount)
+    {
+        if (!retryCount.HasValue)
+        {
+            return source.OnErrorRetry();
+        }
+
+        return retryCount.Value == 0
+            ? Observable.Empty<RxVoid>()
+            : source.Retry(retryCount.Value - 1);
+    }
+
+    /// <summary>Converts a non-generic task into a reactive void task.</summary>
+    /// <param name="task">The task to observe.</param>
+    /// <returns>A task that emits the reactive void value after completion.</returns>
+    private static async Task<RxVoid> ToRxVoidAsync(Task task)
+    {
+        await task.ConfigureAwait(false);
+        return RxVoid.Default;
     }
 }

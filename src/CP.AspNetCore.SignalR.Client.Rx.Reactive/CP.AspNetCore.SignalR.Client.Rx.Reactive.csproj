@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net472;net48;net481;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([System.String]::Copy('$(NETCoreSdkVersion)').StartsWith('10.')) != 'True'">$(TargetFrameworks);net11.0</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DefineConstants>$(DefineConstants);REACTIVE_SHIM</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="ReactiveUI.Primitives.Reactive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\CP.AspNetCore.SignalR.Client.Rx\**\*.cs"
+             Exclude="..\CP.AspNetCore.SignalR.Client.Rx\bin\**;..\CP.AspNetCore.SignalR.Client.Rx\obj\**"
+             Link="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Channels" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="Microsoft.AspNetCore.SignalR.Client" />
+    <Using Include="ReactiveUI.Primitives.Reactive" />
+    <Using Include="ReactiveUI.Primitives.Extensions.Reactive" />
+    <Using Include="System.Reactive.Disposables.CompositeDisposable" Alias="CompositeDisposable" />
+    <Using Include="System.Reactive.Disposables.Disposable" Alias="Disposable" />
+    <Using Include="System.Reactive.Unit" Alias="RxVoid" />
+    <Using Include="ReactiveUI.Primitives.Reactive.Signals.Signal" Alias="Observable" />
+  </ItemGroup>
+
+</Project>

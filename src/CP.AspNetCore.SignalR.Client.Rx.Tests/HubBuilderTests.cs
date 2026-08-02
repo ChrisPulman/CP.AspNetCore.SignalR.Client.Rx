@@ -1,11 +1,12 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Reactive.Disposables;
-using Microsoft.AspNetCore.SignalR.Client;
-
+#if REACTIVE_SHIM
+namespace CP.AspNetCore.SignalR.Client.Rx.Reactive.Tests;
+#else
 namespace CP.AspNetCore.SignalR.Client.Rx.Tests;
+#endif
 
 /// <summary>Tests observable hub connection creation.</summary>
 public sealed class HubBuilderTests
@@ -15,7 +16,7 @@ public sealed class HubBuilderTests
     [Test]
     public async Task CreateThrowsWhenBuilderDelegateIsNull()
     {
-        await Assert.That(() => HubBuilder.Create(null!)).Throws<ArgumentNullException>();
+        await Assert.That(static () => HubBuilder.Create(null!)).Throws<ArgumentNullException>();
     }
 
     /// <summary>Verifies that the created observable emits a connection and owns the disposable scope.</summary>
@@ -25,7 +26,7 @@ public sealed class HubBuilderTests
     {
         (HubConnection HubConnection, CompositeDisposable Disposables)? created = null;
 
-        using var subscription = HubBuilder.Create(builder => builder.WithUrl("http://localhost/testHub"))
+        using var subscription = HubBuilder.Create(static builder => builder.WithUrl("http://localhost/testHub"))
             .Subscribe(value => created = value);
 
         await Assert.That(created).IsNotNull();

@@ -9,23 +9,23 @@
     <LangVersion>preview</LangVersion>
     <Configuration>$(TargetFramework)</Configuration>
     <Company>ChrisPulman</Company>
-    <NoWarn>CS1591;IDE0190;IDE1006;CA1510</NoWarn>
     <Nullable>enable</Nullable>
     <PackageIcon>logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>Compatability with Net 8 / 9 / 10 / 11 and net462</PackageReleaseNotes>
-    <PackageTags>Microsoft;Extensions;SignalR;Rx;Reactive;net;netstandard</PackageTags>
+    <PackageReleaseNotes>Compatibility with .NET 8 / 9 / 10 / 11 and .NET Framework 4.6.2 / 4.7.2 / 4.8 / 4.8.1</PackageReleaseNotes>
+    <PackageTags>Microsoft;Extensions;SignalR;Rx;Reactive;ReactiveUI.Primitives;net</PackageTags>
     <EnableNETAnalyzers>True</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
 
-    <PackageProjectUrl>https://github.com/ChrisPulman/CP.Extensions.Hosting</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/ChrisPulman/CP.Extensions.Hosting</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/ChrisPulman/CP.AspNetCore.SignalR.Client.Rx</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ChrisPulman/CP.AspNetCore.SignalR.Client.Rx</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!--https://devblogs.microsoft.com/dotnet/producing-packages-with-source-link/-->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
     <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <!-- Include PDB in the built .nupkg -->
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
@@ -36,8 +36,19 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <MinVerAutoIncrement>minor</MinVerAutoIncrement>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerMinimumMajorMinor>1.6</MinVerMinimumMajorMinor>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(IsTestProject)' != 'true'">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.301" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,8 +58,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!--<Compile Update="**\*.cs" DependentUpon="I%(Filename).cs" />-->
-    <PackageReference Include="StyleSharp.Analyzers" Version="3.40.1" PrivateAssets="All" />
-    <PackageReference Include="Roslynator.Analyzers" Version="4.15.0" PrivateAssets="All" />
+    <PackageReference Include="StyleSharp.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="PerformanceSharp.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="SecuritySharp.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>
 </Project>

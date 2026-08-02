@@ -1,52 +1,32 @@
-using Nuke.Common;
-using Nuke.Common.CI.GitHubActions;
-using Nuke.Common.Git;
-using Nuke.Common.IO;
-using Nuke.Common.ProjectModel;
-using Nuke.Common.Tooling;
-using Nuke.Common.Tools.NerdbankGitVersioning;
-using Nuke.Common.Tools.DotNet;
-using Serilog;
-using static Nuke.Common.Tools.DotNet.DotNetTasks;
-using Nuke.Common.Tools.PowerShell;
-using CP.BuildTools;
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
 
-////[GitHubActions(
-////    "BuildOnly",
-////    GitHubActionsImage.WindowsLatest,
-////    OnPushBranchesIgnore = new[] { "main" },
-////    FetchDepth = 0,
-////    InvokedTargets = new[] { nameof(Compile) })]
-////[GitHubActions(
-////    "BuildDeploy",
-////    GitHubActionsImage.WindowsLatest,
-////    OnPushBranches = new[] { "main" },
-////    FetchDepth = 0,
-////    ImportSecrets = new[] { nameof(NuGetApiKey) },
-////    InvokedTargets = new[] { nameof(Compile), nameof(Deploy) })]
-sealed partial class Build : NukeBuild
+namespace CP.AspNetCore.SignalR.Client.Rx.Build;
+
+/// <summary>Defines the repository build pipeline.</summary>
+public sealed class Build : NukeBuild
 {
-    //// Support plugins are available for:
-    ////   - JetBrains ReSharper        https://nuke.build/resharper
-    ////   - JetBrains Rider            https://nuke.build/rider
-    ////   - Microsoft VisualStudio     https://nuke.build/visualstudio
-    ////   - Microsoft VSCode           https://nuke.build/vscode
+    /// <summary>Gets the repository solution that the build pipeline operates on.</summary>
+    private static readonly AbsolutePath SolutionFile = RootDirectory / "src" / "CP.AspNetCore.SignalR.Client.Rx.slnx";
 
-    public static int Main() => Execute<Build>(x => x.Compile);
-
-    [GitRepository] readonly GitRepository Repository;
-    [Solution(GenerateProjects = true)] readonly Solution Solution;
-    [NerdbankGitVersioning] readonly NerdbankGitVersioning NerdbankVersioning;
-    [Parameter][Secret] readonly string NuGetApiKey;
+    /// <summary>Gets or sets the build configuration.</summary>
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    public Configuration Configuration { get; set; } = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    AbsolutePath PackagesDirectory => RootDirectory / "output";
+    /// <summary>Gets the directory used for generated packages.</summary>
+    private static AbsolutePath PackagesDirectory => RootDirectory / "output";
 
-    Target Print => _ => _
-        .Executes(() => Log.Information("NerdbankVersioning = {Value}", NerdbankVersioning.NuGetPackageVersion));
+    /// <summary>Gets the target that displays the effective build configuration and version override.</summary>
+    private Target Print => target => target
+        .Executes(() =>
+        {
+            Log.Information("Configuration = {Configuration}", Configuration);
+            Log.Information("MinVerVersionOverride = {Value}", Environment.GetEnvironmentVariable("MinVerVersionOverride") ?? "<auto>");
+        });
 
-    Target Clean => _ => _
+    /// <summary>Gets the target that cleans generated package output before a non-local restore.</summary>
+    private Target Clean => target => target
         .Before(Restore)
         .Executes(() =>
         {
@@ -55,57 +35,23 @@ sealed partial class Build : NukeBuild
                 return;
             }
 
-            PackagesDirectory.CreateOrCleanDirectory();
+            _ = PackagesDirectory.CreateOrCleanDirectory();
         });
 
-    Target Restore => _ => _
+    /// <summary>Gets the target that restores the repository solution dependencies.</summary>
+    private Target Restore => target => target
         .DependsOn(Clean)
-        .Executes(() => DotNetRestore(s => s.SetProjectFile(Solution)));
+        .Executes(() => DotNetRestore(s => s.SetProjectFile(SolutionFile)));
 
-    Target Compile => _ => _
+    /// <summary>Gets the target that builds the repository solution for the selected configuration.</summary>
+    private Target Compile => target => target
         .DependsOn(Restore, Print)
         .Executes(() => DotNetBuild(s => s
-                .SetProjectFile(Solution)
+                .SetProjectFile(SolutionFile)
                 .SetConfiguration(Configuration)
                 .SetNoRestore(true)));
 
-    Target Pack => _ => _
-    .After(Compile)
-    .Produces(PackagesDirectory / "*.nupkg")
-    .Executes(() =>
-    {
-        if (Repository.IsOnMainOrMasterBranch())
-        {
-            var packableProjects = Solution.GetPackableProjects();
-
-            foreach (var project in packableProjects!)
-            {
-                Log.Information("Packing {Project}", project.Name);
-            }
-
-            DotNetPack(settings => settings
-                .SetConfiguration(Configuration)
-                .SetNoBuild(true)
-                .SetVersion(NerdbankVersioning.NuGetPackageVersion)
-                .SetOutputDirectory(PackagesDirectory)
-                .CombineWith(packableProjects, (packSettings, project) =>
-                    packSettings.SetProject(project)));
-        }
-    });
-
-    Target Deploy => _ => _
-    .DependsOn(Pack)
-    .Requires(() => NuGetApiKey)
-    .Executes(() =>
-    {
-        if (Repository.IsOnMainOrMasterBranch())
-        {
-            DotNetNuGetPush(settings => settings
-                        .SetSource(this.PublicNuGetSource())
-                        .SetSkipDuplicate(true)
-                        .SetApiKey(NuGetApiKey)
-                        .CombineWith(PackagesDirectory.GlobFiles("*.nupkg"), (s, v) => s.SetTargetPath(v)),
-                    degreeOfParallelism: 5, completeOnFailure: true);
-        }
-    });
+    /// <summary>Runs the requested NUKE targets.</summary>
+    /// <returns>The process exit code.</returns>
+    public static int Main() => Execute<Build>(x => x.Compile);
 }

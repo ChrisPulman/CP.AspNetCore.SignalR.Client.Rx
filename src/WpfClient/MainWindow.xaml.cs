@@ -1,15 +1,9 @@
-// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
-// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// Copyright (c) 2019-2026 Chris Pulman and contributors. All rights reserved.
+// Chris Pulman and contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
 #define DEFAULT
 #if DEFAULT
-
-using System;
-using System.Windows;
-using CP.AspNetCore.SignalR.Client.Rx;
-using Microsoft.AspNetCore.SignalR.Client;
-using ReactiveMarbles.ObservableEvents;
 
 namespace SignalRChatClient;
 
@@ -22,62 +16,59 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        HubBuilder.Create(builder => builder.WithUrl("https://localhost:53933/ChatHub"))
+        _ = HubBuilder.Create(static builder => builder.WithUrl("https://localhost:53933/ChatHub"))
             .Subscribe(x =>
             {
                 var connection = x.hubConnection;
-                x.disposables.Add(connection.On<string, string>("ReceiveMessage").Subscribe(responce => Dispatcher.Invoke(() =>
+                x.disposables.Add(connection.On(new HubMethod<(string, string)>("ReceiveMessage")).Subscribe(response => Dispatcher.Invoke(() =>
                 {
-                    var newMessage = $"{responce.t1}: {responce.t2}";
-                    messagesList.Items.Add(newMessage);
+                    var newMessage = $"{response.t1}: {response.t2}";
+                    _ = messagesList.Items.Add(newMessage);
                 })));
 
                 x.disposables.Add(connection.HasClosed().Subscribe(error => Dispatcher.Invoke(() =>
                 {
                     connectButton.IsEnabled = true;
                     sendButton.IsEnabled = false;
-                    messagesList.Items.Add(error);
+                    _ = messagesList.Items.Add(error);
                 })));
 
-                x.disposables.Add(connectButton.Events().Click.Start(connection).Subscribe(_ => Dispatcher.Invoke(() =>
+                x.disposables.Add(ObserveClick(connectButton).Start(connection).Subscribe(startedConnection => Dispatcher.Invoke(() =>
                 {
+                    Debug.Assert(startedConnection.State == HubConnectionState.Connected, "Connected");
                     try
                     {
-                        messagesList.Items.Add("Connection started");
+                        _ = messagesList.Items.Add("Connection started");
                         connectButton.IsEnabled = false;
                         sendButton.IsEnabled = true;
                     }
                     catch (Exception ex)
                     {
-                        messagesList.Items.Add(ex.Message);
+                        _ = messagesList.Items.Add(ex.Message);
                     }
                 })));
 
-                x.disposables.Add(sendButton.Events().Click.Subscribe(_ => Dispatcher.Invoke(async () =>
-                {
-                    try
-                    {
-                        await connection.InvokeAsync("SendMessage", userTextBox.Text, messageTextBox.Text);
-                    }
-                    catch (Exception ex)
-                    {
-                        messagesList.Items.Add(ex.Message);
-                    }
-                })));
+                x.disposables.Add(ObserveClick(sendButton)
+                    .SelectMany(_ => connection.InvokeObservable("SendMessage", default, userTextBox.Text, messageTextBox.Text))
+                    .Subscribe(
+                        static _ => Debug.WriteLine("Message sent."),
+                        error => Dispatcher.Invoke(() => _ = messagesList.Items.Add(error.Message))));
             });
     }
+
+    /// <summary>Creates an observable sequence for a button's click event.</summary>
+    /// <param name="button">The observed button.</param>
+    /// <returns>An observable sequence of routed event arguments.</returns>
+    private static IObservable<RoutedEventArgs> ObserveClick(Button button) =>
+        Observable.CreateSafe<RoutedEventArgs>(observer =>
+        {
+            RoutedEventHandler handler = (_, eventArgs) => observer.OnNext(eventArgs);
+            button.Click += handler;
+            return Disposable.Create((button, handler), static state => state.button.Click -= state.handler);
+        });
 }
 
 #elif RETRY
-using System;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using CP.AspNetCore.SignalR.Client.Rx;
-using Microsoft.AspNetCore.SignalR.Client;
-using ReactiveMarbles.ObservableEvents;
-
 namespace SignalRChatClient
 {
 /// <summary>
@@ -108,9 +99,9 @@ public partial class MainWindow : Window
                 x.disposables.Add(connection.HasReconnected().Subscribe(_ =>
                     Debug.Assert(connection.State == HubConnectionState.Connected, "Connected")));
 
-                x.disposables.Add(connectButton.Events().Click.Subscribe(async _ =>
+                x.disposables.Add(ObserveClick(connectButton).Subscribe(async _ =>
                 {
-                    connection.On<string, string>("ReceiveMessage").Subscribe(x => Dispatcher.Invoke(() =>
+                    connection.On(new HubMethod<(string, string)>("ReceiveMessage")).Subscribe(x => Dispatcher.Invoke(() =>
                     {
                         var newMessage = $"{x.t1}: {x.t2}";
                         messagesList.Items.Add(newMessage);
@@ -129,7 +120,7 @@ public partial class MainWindow : Window
                     }
                 }));
 
-                x.disposables.Add(sendButton.Events().Click.Subscribe(async _ =>
+                x.disposables.Add(ObserveClick(sendButton).Subscribe(async _ =>
                 {
                     try
                     {
@@ -163,5 +154,13 @@ public partial class MainWindow : Window
                 }
             });
     }
+
+    private static IObservable<RoutedEventArgs> ObserveClick(Button button) =>
+        Observable.CreateSafe<RoutedEventArgs>(observer =>
+        {
+            RoutedEventHandler handler = (_, eventArgs) => observer.OnNext(eventArgs);
+            button.Click += handler;
+            return Disposable.Create((button, handler), static state => state.button.Click -= state.handler);
+        });
 }
 #endif
