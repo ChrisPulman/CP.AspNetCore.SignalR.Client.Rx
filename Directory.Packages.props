@@ -17,6 +17,6 @@
     <PackageVersion Include="SecuritySharp.Analyzers" Version="5.0.5" />
     <PackageVersion Include="StyleSharp.Analyzers" Version="5.0.4" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
-    <PackageVersion Include="TUnit" Version="1.66.16" />
+    <PackageVersion Include="TUnit" Version="1.68.17" />
   </ItemGroup>
 </Project>
