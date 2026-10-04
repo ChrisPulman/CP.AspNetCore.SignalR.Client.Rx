@@ -282,6 +282,16 @@ jobs:
           name: unsigned-nuget
           path: signed
 
+      - name: Prepare verified jsign 7.4
+        shell: bash
+        run: |
+          set -euo pipefail
+          JAR="$RUNNER_TEMP/jsign-7.4.jar"
+          EXPECTED_JSIGN_SHA256="2abf2ade9ea322acc2d60c24794eadc465ff9380938fca4c932d09e0b25f1c28"
+          curl -fsSL --retry 3 -o "$JAR" "https://repo.maven.apache.org/maven2/net/jsign/jsign/7.4/jsign-7.4.jar"
+          printf '%s  %s\n' "$EXPECTED_JSIGN_SHA256" "$JAR" | sha256sum --check --strict
+          java -jar "$JAR" --version
+
       - name: Resolve prebuilt SimplySign paths
         shell: bash
         run: |
@@ -382,12 +392,8 @@ jobs:
           set -euo pipefail
           : "${CERTUM_CERT_FINGERPRINT:?map the CERTUM_CERT_FINGERPRINT secret into the job env}"
 
-          JAR="${JSIGN_JAR:-$RUNNER_TEMP/jsign.jar}"
+          JAR="$RUNNER_TEMP/jsign-7.4.jar"
           EXPECTED_JSIGN_SHA256="2abf2ade9ea322acc2d60c24794eadc465ff9380938fca4c932d09e0b25f1c28"
-          if [ ! -s "$JAR" ]; then
-            curl -fsSL -o "$JAR" "https://repo1.maven.org/maven2/net/jsign/jsign/7.4/jsign-7.4.jar"
-          fi
-
           actual_jsign_sha256="$(sha256sum "$JAR" | awk '{print $1}')"
           if [ "$actual_jsign_sha256" != "$EXPECTED_JSIGN_SHA256" ]; then
             echo "::error::jsign checksum validation failed."
