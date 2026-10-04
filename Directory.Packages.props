@@ -1,22 +1,27 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <RoslynAnalysersVersion>5.1.2</RoslynAnalysersVersion>
+    <MicrosoftRuntimePackageVersion>10.0.12</MicrosoftRuntimePackageVersion>
+    <MicrosoftRuntimePackageVersion Condition="'$(TargetFramework)' == 'net8.0'">8.0.31</MicrosoftRuntimePackageVersion>
+    <MicrosoftRuntimePackageVersion Condition="'$(TargetFramework)' == 'net9.0'">9.0.20</MicrosoftRuntimePackageVersion>
+    <MicrosoftRuntimePackageVersion Condition="'$(TargetFramework)' == 'net11.0'">11.0.0-rc.1.26425.128</MicrosoftRuntimePackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="CP.Nuke.BuildTools" Version="3.0.2" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="$(MicrosoftRuntimePackageVersion)" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="$(MicrosoftRuntimePackageVersion)" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="Nuke.Common" Version="10.1.0" />
-    <PackageVersion Include="PerformanceSharp.Analyzers" Version="5.1.2" />
     <PackageVersion Include="ReactiveUI.Primitives" Version="9.0.0" />
     <PackageVersion Include="ReactiveUI.Primitives.Reactive" Version="9.0.0" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
-    <PackageVersion Include="SecuritySharp.Analyzers" Version="5.1.2" />
-    <PackageVersion Include="StyleSharp.Analyzers" Version="5.1.2" />
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.12" />
+    <PackageVersion Include="StyleSharp.Analyzers" Version="$(RoslynAnalysersVersion)" />
+    <PackageVersion Include="PerformanceSharp.Analyzers" Version="$(RoslynAnalysersVersion)" />
+    <PackageVersion Include="SecuritySharp.Analyzers" Version="$(RoslynAnalysersVersion)" />
     <PackageVersion Include="TUnit" Version="1.72.16" />
   </ItemGroup>
 </Project>

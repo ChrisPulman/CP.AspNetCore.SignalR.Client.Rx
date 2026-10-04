@@ -130,6 +130,27 @@ public sealed class HubConnectionMixinsTests
         await app.Connection.StopAsync().WaitAsync(TestTimeout);
     }
 
+    /// <summary>Verifies retry counts limit the total connection attempts after failures.</summary>
+    /// <param name="attemptCount">The total permitted connection attempts.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
+    [Test]
+    [Arguments(1)]
+    [Arguments(3)]
+    public async Task StartObservableRetryCountLimitsFailedConnectionAttempts(int attemptCount)
+    {
+        using var handler = new FailingNegotiationHandler();
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl("http://localhost/testHub", options => options.HttpMessageHandlerFactory = _ => handler)
+            .Build();
+
+        await Assert.That(async () => await connection.StartObservable(attemptCount, default)
+                .ToTask()
+                .WaitAsync(TestTimeout))
+            .Throws<System.Net.Http.HttpRequestException>();
+        await Assert.That(handler.AttemptCount).IsEqualTo(attemptCount);
+        await Assert.That(connection.State).IsEqualTo(HubConnectionState.Disconnected);
+    }
+
     /// <summary>Verifies all observable source and trigger start overloads emit the started connection.</summary>
     /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
@@ -371,5 +392,25 @@ public sealed class HubConnectionMixinsTests
         var handler = (Func<T, Task>?)eventField.GetValue(connection)
             ?? throw new InvalidOperationException($"The {eventField.Name} event has no registered handler.");
         await handler(argument).ConfigureAwait(false);
+    }
+
+    /// <summary>Counts failed SignalR negotiation requests.</summary>
+    private sealed class FailingNegotiationHandler : System.Net.Http.HttpMessageHandler
+    {
+        /// <summary>Gets the number of negotiation attempts.</summary>
+        internal int AttemptCount { get; private set; }
+
+        /// <summary>Fails the negotiation request.</summary>
+        /// <param name="request">The negotiation request.</param>
+        /// <param name="cancellationToken">The request cancellation token.</param>
+        /// <returns>A failed response task.</returns>
+        protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(
+            System.Net.Http.HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            AttemptCount++;
+            return Task.FromException<System.Net.Http.HttpResponseMessage>(
+                new System.Net.Http.HttpRequestException("Negotiation failed."));
+        }
     }
 }

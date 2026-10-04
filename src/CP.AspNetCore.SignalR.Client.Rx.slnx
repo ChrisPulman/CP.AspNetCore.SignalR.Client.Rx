@@ -6,9 +6,7 @@
     <File Path="../global.json" />
     <File Path="../LICENSE" />
     <File Path="../README.md" />
-    <File Path="../stylecop.json" />
     <File Path="../testconfig.json" />
-    <File Path="../version.json" />
   </Folder>
   <Project Path="../build/_build.csproj">
     <Build Project="false" />
