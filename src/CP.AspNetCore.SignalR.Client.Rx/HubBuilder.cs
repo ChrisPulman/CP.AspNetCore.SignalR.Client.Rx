@@ -31,21 +31,14 @@ public static class HubBuilder
     /// <summary>Disposes the hub connection.</summary>
     /// <param name="connection">The hub connection.</param>
     private static void DisposeConnection(HubConnection connection) =>
-        ObserveDisposal(connection.DisposeAsync());
+        Observable.FromAsync(() => DisposeConnectionAsync(connection)).Subscribe();
 
-    /// <summary>Observes a pending asynchronous disposal operation.</summary>
-    /// <param name="disposal">The disposal operation.</param>
-    private static void ObserveDisposal(ValueTask disposal) =>
-        new DisposeContinuation(disposal.GetAwaiter()).Register();
-
-    /// <summary>Observes asynchronous connection disposal without blocking the disposing thread.</summary>
-    /// <param name="awaiter">The disposal awaiter.</param>
-    private sealed class DisposeContinuation(ValueTaskAwaiter awaiter)
+    /// <summary>Asynchronously disposes a hub connection.</summary>
+    /// <param name="connection">The hub connection.</param>
+    /// <returns>A task that completes after disposal.</returns>
+    private static async Task<RxVoid> DisposeConnectionAsync(HubConnection connection)
     {
-        /// <summary>Registers the completion callback.</summary>
-        public void Register() => awaiter.OnCompleted(Complete);
-
-        /// <summary>Observes the asynchronous disposal result.</summary>
-        private void Complete() => awaiter.GetResult();
+        await connection.DisposeAsync().ConfigureAwait(false);
+        return RxVoid.Default;
     }
 }

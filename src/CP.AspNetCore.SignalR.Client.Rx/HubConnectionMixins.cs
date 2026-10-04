@@ -387,7 +387,7 @@ public static class HubConnectionMixins
 
         return retryCount.Value == 0
             ? Observable.Empty<RxVoid>()
-            : source.Retry(retryCount.Value - 1);
+            : source.Retry(retryCount.Value);
     }
 
     /// <summary>Converts a non-generic task into a reactive void task.</summary>
