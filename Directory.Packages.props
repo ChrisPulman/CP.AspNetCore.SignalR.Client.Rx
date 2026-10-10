@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <RoslynAnalysersVersion>5.1.2</RoslynAnalysersVersion>
+    <RoslynAnalysersVersion>5.1.3</RoslynAnalysersVersion>
     <MicrosoftRuntimePackageVersion>10.0.12</MicrosoftRuntimePackageVersion>
     <MicrosoftRuntimePackageVersion Condition="'$(TargetFramework)' == 'net8.0'">8.0.31</MicrosoftRuntimePackageVersion>
     <MicrosoftRuntimePackageVersion Condition="'$(TargetFramework)' == 'net9.0'">9.0.20</MicrosoftRuntimePackageVersion>
